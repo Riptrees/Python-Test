@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game - Learn Python!</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .game-container {
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        #gameCanvas {
+            border: 3px solid #fff;
+            border-radius: 10px;
+            background: #000;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 200px;
+        }
+        
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .score-display {
+            font-size: 2em;
+            margin: 20px 0;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .info-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .info-card h3 {
+            margin-top: 0;
+            color: #ffd700;
+        }
+        
+        .player-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        input[type="text"] {
+            padding: 10px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 16px;
+            min-width: 200px;
+        }
+        
+        .leaderboard {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.5em;
+            z-index: 1000;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏓 Pong Game</h1>
+        <p class="subtitle">Learn Python while playing the classic Pong game!</p>
+        
+        <div class="game-container">
+            <div class="score-display" id="scoreDisplay">Player 1: 0 | Player 2: 0</div>
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>Player 1 (Left)</h3>
+                    <button onclick="movePaddle(1, 'up')">↑ W</button>
+                    <button onclick="movePaddle(1, 'down')">↓ S</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Player 2 (Right)</h3>
+                    <button onclick="movePaddle(2, 'up')">↑ ↑</button>
+                    <button onclick="movePaddle(2, 'down')">↓ ↓</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Game Controls</h3>
+                    <button onclick="resetGame()">🔄 Reset Game</button>
+                    <button onclick="startGame()">▶️ Start Game</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-card">
+                <h3>👥 Players</h3>
+                <div class="player-form">
+                    <input type="text" id="player1Name" placeholder="Player 1 Name">
+                    <button onclick="createPlayer(1)">Create Player 1</button>
+                </div>
+                <div class="player-form">
+                    <input type="text" id="player2Name" placeholder="Player 2 Name">
+                    <button onclick="createPlayer(2)">Create Player 2</button>
+                </div>
+                <div id="playerStatus"></div>
+            </div>
+            
+            <div class="info-card">
+                <h3>🏆 Leaderboard</h3>
+                <div class="leaderboard" id="leaderboard">
+                    <div>Loading...</div>
+                </div>
+                <button onclick="loadLeaderboard()">Refresh</button>
+            </div>
+            
+            <div class="info-card">
+                <h3>📊 Game History</h3>
+                <div class="leaderboard" id="gameHistory">
+                    <div>Loading...</div>
+                </div>
+                <button onclick="loadGameHistory()">Refresh</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="gameOverModal" class="game-over hidden">
+        <h2>🎉 Game Over!</h2>
+        <p id="winnerText"></p>
+        <button onclick="closeGameOver()">Play Again</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameState = {};
+        let gameLoop;
+        let gameRunning = false;
+        let player1Id = null;
+        let player2Id = null;
+        let gameStartTime = null;
+        
+        // Game constants
+        const PADDLE_WIDTH = 15;
+        const PADDLE_HEIGHT = 100;
+        const BALL_RADIUS = 10;
+        
+        // Initialize game
+        async function initGame() {
+            await loadGameState();
+            await loadLeaderboard();
+            await loadGameHistory();
+            drawGame();
+        }
+        
+        // Load current game state
+        async function loadGameState() {
+            try {
+                const response = await fetch('/api/game/state');
+                gameState = await response.json();
+                updateScoreDisplay();
+            } catch (error) {
+                console.error('Error loading game state:', error);
+            }
+        }
+        
+        // Update game state (ball physics)
+        async function updateGame() {
+            if (!gameRunning) return;
+            
+            try {
+                const response = await fetch('/api/game/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                gameState = await response.json();
+                
+                if (gameState.game_over) {
+                    gameRunning = false;
+                    showGameOver();
+                    await saveGameResult();
+                }
+                
+                updateScoreDisplay();
+            } catch (error) {
+                console.error('Error updating game:', error);
+            }
+        }
+        
+        // Move paddle
+        async function movePaddle(paddle, direction) {
+            try {
+                await fetch('/api/game/move', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paddle: paddle,
+                        direction: direction
+                    })
+                });
+                await loadGameState();
+            } catch (error) {
+                console.error('Error moving paddle:', error);
+            }
+        }
+        
+        // Reset game
+        async function resetGame() {
+            try {
+                await fetch('/api/game/reset', { method: 'POST' });
+                gameRunning = false;
+                gameStartTime = null;
+                await loadGameState();
+                closeGameOver();
+            } catch (error) {
+                console.error('Error resetting game:', error);
+            }
+        }
+        
+        // Start game
+        function startGame() {
+            if (!gameRunning) {
+                gameRunning = true;
+                gameStartTime = Date.now();
+                gameLoop = setInterval(updateGame, 16); // ~60 FPS
+            }
+        }
+        
+        // Draw game
+        function drawGame() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw center line
+            ctx.strokeStyle = '#fff';
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw paddles
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(50, gameState.paddle1?.y || 250, PADDLE_WIDTH, PADDLE_HEIGHT);
+            ctx.fillRect(canvas.width - 65, gameState.paddle2?.y || 250, PADDLE_WIDTH, PADDLE_HEIGHT);
+            
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(gameState.ball?.x || 400, gameState.ball?.y || 300, BALL_RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            
+            // Draw score
+            ctx.fillStyle = '#fff';
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(gameState.scores?.player1 || 0, canvas.width / 4, 100);
+            ctx.fillText(gameState.scores?.player2 || 0, 3 * canvas.width / 4, 100);
+        }
+        
+        // Update score display
+        function updateScoreDisplay() {
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            scoreDisplay.textContent = `Player 1: ${gameState.scores?.player1 || 0} | Player 2: ${gameState.scores?.player2 || 0}`;
+            scoreDisplay.classList.add('pulse');
+            setTimeout(() => scoreDisplay.classList.remove('pulse'), 500);
+        }
+        
+        // Show game over modal
+        function showGameOver() {
+            const modal = document.getElementById('gameOverModal');
+            const winnerText = document.getElementById('winnerText');
+            
+            if (gameState.winner === 'player1') {
+                winnerText.textContent = 'Player 1 Wins! 🎉';
+            } else if (gameState.winner === 'player2') {
+                winnerText.textContent = 'Player 2 Wins! 🎉';
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        
+        // Close game over modal
+        function closeGameOver() {
+            document.getElementById('gameOverModal').classList.add('hidden');
+        }
+        
+        // Create player
+        async function createPlayer(playerNum) {
+            const nameInput = document.getElementById(`player${playerNum}Name`);
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Please enter a player name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/players', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (playerNum === 1) {
+                        player1Id = result.id;
+                    } else {
+                        player2Id = result.id;
+                    }
+                    
+                    nameInput.value = '';
+                    updatePlayerStatus();
+                    await loadLeaderboard();
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                console.error('Error creating player:', error);
+                alert('Error creating player');
+            }
+        }
+        
+        // Update player status
+        function updatePlayerStatus() {
+            const status = document.getElementById('playerStatus');
+            let statusText = '';
+            
+            if (player1Id) {
+                statusText += '✅ Player 1 created<br>';
+            }
+            if (player2Id) {
+                statusText += '✅ Player 2 created<br>';
+            }
+            
+            status.innerHTML = statusText;
+        }
+        
+        // Save game result
+        async function saveGameResult() {
+            if (!player1Id || !player2Id) return;
+            
+            const gameDuration = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : 0;
+            const winnerId = gameState.winner === 'player1' ? player1Id : player2Id;
+            
+            try {
+                await fetch('/api/games', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        player1_id: player1Id,
+                        player2_id: player2Id,
+                        player1_score: gameState.scores?.player1 || 0,
+                        player2_score: gameState.scores?.player2 || 0,
+                        winner_id: winnerId,
+                        game_duration: gameDuration
+                    })
+                });
+                
+                await loadGameHistory();
+                await loadLeaderboard();
+            } catch (error) {
+                console.error('Error saving game result:', error);
+            }
+        }
+        
+        // Load leaderboard
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const leaderboard = await response.json();
+                
+                const container = document.getElementById('leaderboard');
+                container.innerHTML = '';
+                
+                leaderboard.forEach((player, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    item.innerHTML = `
+                        <span>${index + 1}. ${player.name}</span>
+                        <span>${player.wins} wins</span>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+        
+        // Load game history
+        async function loadGameHistory() {
+            try {
+                const response = await fetch('/api/games');
+                const games = await response.json();
+                
+                const container = document.getElementById('gameHistory');
+                container.innerHTML = '';
+                
+                games.slice(0, 10).forEach(game => {
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    item.innerHTML = `
+                        <div>
+                            <strong>${game.player1_name} vs ${game.player2_name}</strong><br>
+                            <small>${game.player1_score} - ${game.player2_score}</small>
+                        </div>
+                        <div>
+                            <small>${new Date(game.created_at).toLocaleDateString()}</small>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading game history:', error);
+            }
+        }
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'w':
+                    movePaddle(1, 'up');
+                    break;
+                case 's':
+                    movePaddle(1, 'down');
+                    break;
+                case 'arrowup':
+                    movePaddle(2, 'up');
+                    break;
+                case 'arrowdown':
+                    movePaddle(2, 'down');
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    if (gameRunning) {
+                        gameRunning = false;
+                        clearInterval(gameLoop);
+                    } else {
+                        startGame();
+                    }
+                    break;
+            }
+        });
+        
+        // Game loop for drawing
+        setInterval(() => {
+            drawGame();
+        }, 16); // ~60 FPS
+        
+        // Initialize when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
